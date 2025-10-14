@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Player - PiLearn</title>
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --primary-color:#17a2b8;
+            --secondary-color:#f8f9fa;
+            --text-color:#333;
+            --border-color:#dee2e6;
+            --completed-color:#28a745;
+        }
+        body { 
+            font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif; 
+            color:var(--text-color); 
+            background:#fff; 
+            height:100vh; 
+            overflow:hidden; 
+        }
+        .container { 
+            display:grid; 
+            grid-template-rows:auto 1fr; 
+            height:100vh; 
+        }
+        .header { 
+            background:white; 
+            border-bottom:1px solid var(--border-color); 
+            padding:1rem; 
+            box-shadow:0 2px 4px rgba(0,0,0,0.1); 
+            position: relative;
+            z-index: 10;
+        }
+        .progress-bar { 
+            width:100%; 
+            height:6px; 
+            background-color:var(--border-color); 
+            border-radius:3px; 
+            margin-bottom:0.5rem; 
+            overflow:hidden; 
+        }
+        .progress-fill { 
+            height:100%; 
+            background-color:var(--completed-color); 
+            width:0%; 
+            transition:width 0.3s ease; 
+        }
+        .header-content { 
+            display:flex; 
+            justify-content:space-between; 
+            align-items:center; 
+        }
+        .course-title { 
+            font-size:1.1rem; 
+            font-weight:600; 
+        }
+        .completion-text { 
+            color:#666; 
+            font-size:0.9rem; 
+        }
+        .sidebar-toggle {
+            display: none;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 0.5rem 0.75rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+        .main-content { 
+            display:grid; 
+            grid-template-columns:300px 1fr; 
+            height:100%; 
+            position: relative;
+        }
+        .sidebar { 
+            background:var(--secondary-color); 
+            border-right:1px solid var(--border-color); 
+            overflow-y:auto; 
+            height:100%; 
+            transition: transform 0.3s ease;
+        }
+        .sidebar-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            background: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .sidebar-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .close-sidebar {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            color: #666;
+        }
+        .section-header {
+            background: white;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .section-lecture-count {
+            font-size: 0.8rem;
+            color: #666;
+            font-weight: normal;
+        }
+        .lecture-list { 
+            background:white; 
+        }
+        .lecture-item { 
+            padding:0.75rem 1rem; 
+            border-bottom:1px solid var(--border-color); 
+            cursor:pointer; 
+            display:flex; 
+            align-items:center; 
+            gap:0.75rem; 
+            transition:background-color 0.2s; 
+        }
+        .lecture-item:hover { 
+            background:#f8f9fa; 
+        }
+        .lecture-item.active { 
+            background:var(--primary-color); 
+            color:white; 
+        }
+        .lecture-item.completed { 
+            background:#e8f5e9; 
+        }
+        .lecture-item.active.completed { 
+            background:var(--primary-color); 
+        }
+        .lecture-title { 
+            flex:1; 
+        }
+        .lecture-status { 
+            font-size:0.8rem; 
+            color:#666; 
+        }
+        .lecture-item.active .lecture-status { 
+            color:rgba(255,255,255,0.8); 
+        }
+        .lecture-item.completed .lecture-status { 
+            color:var(--completed-color); 
+            font-weight:600; 
+        }
+        .video-area { 
+            display:flex; 
+            flex-direction:column; 
+            height:100%; 
+            background:#000; 
+        }
+        .video-container { 
+            flex:1; 
+            background:#000; 
+            display:flex; 
+            align-items:center; 
+            justify-content:center; 
+            position:relative; 
+        }
+        .video-info { 
+            background:white; 
+            padding:1.5rem; 
+            border-top:1px solid var(--border-color); 
+        }
+        .lecture-title-main { 
+            font-size:1.5rem; 
+            font-weight:600; 
+            margin-bottom:0.5rem; 
+        }
+        .lecture-description { 
+            color:#666; 
+            line-height:1.5; 
+            margin-bottom:1.5rem; 
+        }
+        .action-buttons { 
+            display:flex; 
+            gap:1rem; 
+            align-items:center; 
+        }
+        .btn { 
+            padding:0.75rem 1.5rem; 
+            border:none; 
+            border-radius:6px; 
+            font-weight:600; 
+            cursor:pointer; 
+            transition:all 0.2s; 
+        }
+        .btn-primary { 
+            background:var(--primary-color); 
+            color:white; 
+        }
+        .btn-primary:hover { 
+            background:#138496; 
+        }
+        .btn-success { 
+            background:var(--completed-color); 
+            color:white; 
+        }
+        .btn-success:hover { 
+            background:#218838; 
+        }
+        .btn:disabled { 
+            background:#6c757d; 
+            cursor:not-allowed; 
+            opacity:0.6; 
+        }
+        .completion-badge { 
+            background:var(--completed-color); 
+            color:white; 
+            padding:0.5rem 1rem; 
+            border-radius:20px; 
+            font-size:0.9rem; 
+        }
+        .loading { 
+            display:flex; 
+            align-items:center; 
+            justify-content:center; 
+            height:100%; 
+            color:#fff; 
+        }
+        .spinner { 
+            border:3px solid #f3f3f3; 
+            border-top:3px solid var(--primary-color); 
+            border-radius:50%; 
+            width:30px; 
+            height:30px; 
+            animation:spin 1s linear infinite; 
+            margin-right:1rem; 
+        }
+        @keyframes spin { 
+            0% { transform:rotate(0deg); } 
+            100% { transform:rotate(360deg); } 
+        }
+        #bunnyPlayerWrapper { 
+            position:relative; 
+            padding-top:56.25%; 
+            width:100%; 
+            height:0; 
+            display:none; 
+        }
+        #bunnyPlayer { 
+            border:0; 
+            position:absolute; 
+            top:0; 
+            left:0; 
+            height:100%; 
+            width:100%; 
+        }
+        
+        /* Mobile Styles */
+        @media (max-width: 768px) {
+            .sidebar-toggle {
+                display: block;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 20;
+                transform: translateX(-100%);
+                background: white;
+            }
+            
+            .sidebar.open {
+                transform: translateX(0);
+            }
+            
+            .close-sidebar {
+                display: block;
+            }
+            
+            .video-info {
+                padding: 1rem;
+            }
+            
+            .lecture-title-main {
+                font-size: 1.3rem;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .completion-badge {
+                text-align: center;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .header {
+                padding: 0.75rem;
+            }
+            
+            .video-info {
+                padding: 1rem;
+            }
+            
+            .lecture-title-main {
+                font-size: 1.3rem;
+            }
+        }
+        
+        /* Overlay for mobile when sidebar is open */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 15;
+        }
+        
+        .sidebar-overlay.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="header-content">
+            <button class="sidebar-toggle" id="sidebarToggle">📚 Course Content</button>
+            <div class="course-title" id="courseTitle">Loading Course...</div>
+            <div class="completion-text" id="completionText">0% Complete</div>
+        </div>
+    </div>
+    <div class="main-content">
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <div class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">Course Content</div>
+                <button class="close-sidebar" id="closeSidebar">✕</button>
+            </div>
+            <div class="loading" id="sidebarLoading">
+                <div class="spinner"></div> Loading curriculum...
+            </div>
+            <div id="curriculumContent" style="display:none;"></div>
+        </div>
+        <div class="video-area">
+            <div class="video-container" id="videoContainer">
+                <div class="loading" id="videoLoading">
+                    <div class="spinner"></div> Loading lecture...
+                </div>
+                <div id="bunnyPlayerWrapper">
+                    <iframe id="bunnyPlayer" src="" loading="lazy" allow="accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture;" allowfullscreen></iframe>
+                </div>
+            </div>
+            <div class="video-info" id="videoInfo" style="display:none;">
+                <h1 class="lecture-title-main" id="lectureTitleMain">Lecture Title</h1>
+                <p class="lecture-description" id="lectureDescription">Lecture description will appear here.</p>
+                <div class="action-buttons">
+                    <button class="btn btn-success" id="markCompleteBtn">✅ Mark as Complete</button>
+                    <button class="btn btn-primary" id="nextLectureBtn" disabled>Next Lecture →</button>
+                    <div class="completion-badge" id="completionBadge" style="display:none;">✓ Completed</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentCourse = null;
+let currentSections = [];
+let currentLectures = [];
+let completedLectureIds = new Set();
+let currentLectureIndex = 0;
+
+function getCourseId() {
+  const parts = window.location.pathname.split('/');
+  return parts[parts.length - 1];
+}
+
+async function fetchCourse(courseId) {
+  const res = await fetch(`/api/courses/${courseId}`);
+  if (!res.ok) throw new Error('Failed to fetch course data');
+  return res.json();
+}
+
+async function fetchSections(courseId) {
+  const res = await fetch(`/api/courses/sections/${courseId}`);
+  if (!res.ok) throw new Error('Failed to fetch course sections');
+  const data = await res.json();
+  return data.sections || [];
+}
+
+async function fetchProgress(courseId) {
+  const accessToken = localStorage.getItem("token");
+  if (!accessToken) {
+    console.warn("No access token found");
+    return { completed_lectures: 0, total_lectures: 0, progress_percentage: 0, completed_lecture_ids: [] };
+  }
+
+  const res = await fetch(`/api/progress/${courseId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ accessToken })
+  });
+
+  if (!res.ok) {
+    console.error('Failed to fetch progress');
+    return { completed_lectures: 0, total_lectures: 0, progress_percentage: 0, completed_lecture_ids: [] };
+  }
+
+  const data = await res.json();
+
+  return {
+    completed_lectures: data.completed_lectures || 0,
+    total_lectures: data.total_lectures || 0,
+    progress_percentage: data.progress_percentage || 0,
+    completed_lecture_ids: data.completed_lecture_ids || []
+  };
+}
+
+async function loadCourse() {
+  try {
+    const courseId = getCourseId();
+    
+    // Fetch course details first to get library_id
+    const courseData = await fetchCourse(courseId);
+    currentCourse = courseData;
+    
+    // Fetch course sections with lectures
+    currentSections = await fetchSections(courseId);
+    
+    // Flatten all lectures for easier access
+    currentLectures = [];
+    currentSections.forEach(section => {
+      if (section.lectures && section.lectures.length > 0) {
+        currentLectures = currentLectures.concat(section.lectures);
+      }
+    });
+    
+    // Sort lectures by order
+    currentLectures.sort((a, b) => a.order - b.order);
+
+    // Fetch progress and get completed lecture IDs from backend
+    const progressData = await fetchProgress(courseId);
+    completedLectureIds = new Set(progressData.completed_lecture_ids || []);
+
+    const totalLectures = currentLectures.length;
+    const completedCount = completedLectureIds.size;
+
+    // Update progress bar
+    const progressPercent = totalLectures > 0 
+      ? Math.round((completedCount / totalLectures) * 100) 
+      : 0;
+
+    document.getElementById('courseTitle').textContent = currentCourse.title;
+    document.getElementById('completionText').textContent = `${completedCount}/${totalLectures} lectures (${progressPercent}%)`;
+    document.getElementById('progressFill').style.width = `${progressPercent}%`;
+
+    // Build curriculum sidebar with sections
+    const curriculum = document.getElementById('curriculumContent');
+    curriculum.innerHTML = '';
+
+    currentSections.forEach((section, sectionIndex) => {
+      // Add section header
+      const sectionHeader = document.createElement('div');
+      sectionHeader.className = 'section-header';
+      sectionHeader.innerHTML = `
+        <div>${sectionIndex + 1}. ${section.title}</div>
+        <div class="section-lecture-count">${section.lectures ? section.lectures.length : 0} lectures</div>
+      `;
+      curriculum.appendChild(sectionHeader);
+      
+      // Add lectures for this section
+      if (section.lectures && section.lectures.length > 0) {
+        section.lectures.forEach((lecture, lectureIndex) => {
+          // Find the global index of this lecture
+          const globalIndex = currentLectures.findIndex(l => l.id === lecture.id);
+          
+          const lecDiv = document.createElement('div');
+          lecDiv.className = 'lecture-item';
+          lecDiv.dataset.lectureId = lecture.id;
+          lecDiv.dataset.index = globalIndex;
+          
+          // Mark lectures as completed based on actual completed lecture IDs from backend
+          const isCompleted = completedLectureIds.has(lecture.id);
+          if (isCompleted) {
+            lecDiv.classList.add('completed');
+          }
+          
+          lecDiv.innerHTML = `
+            <div class="lecture-title">${lectureIndex + 1}. ${lecture.title}</div>
+            <div class="lecture-status">${isCompleted ? '✅' : '▶'}</div>
+          `;
+          lecDiv.onclick = () => {
+            playLecture(globalIndex);
+            closeMobileSidebar(); // Close sidebar on mobile after selecting a lecture
+          };
+          curriculum.appendChild(lecDiv);
+        });
+      }
+    });
+
+    document.getElementById('sidebarLoading').style.display = 'none';
+    curriculum.style.display = 'block';
+
+    // Auto play first lecture
+    if (currentLectures.length > 0) {
+      playLecture(0);
+    }
+  } catch (err) {
+    console.error("Error loading course:", err);
+    alert("Failed to load course. Please refresh the page.");
+  }
+}
+
+function playLecture(index) {
+  if (index < 0 || index >= currentLectures.length) return;
+  
+  currentLectureIndex = index;
+  const lecture = currentLectures[index];
+  
+  // Update active state in sidebar
+  document.querySelectorAll('.lecture-item').forEach(item => {
+    item.classList.remove('active');
+  });
+  const currentItem = document.querySelector(`.lecture-item[data-index="${index}"]`);
+  if (currentItem) currentItem.classList.add('active');
+  
+  // Update video player
+  document.getElementById('videoLoading').style.display = 'none';
+  const wrapper = document.getElementById('bunnyPlayerWrapper');
+  const iframe = document.getElementById('bunnyPlayer');
+  wrapper.style.display = 'block';
+  
+  // Use library_id from course data
+  const libraryId = currentCourse.library_id || '508366';
+  iframe.src = `https://iframe.mediadelivery.net/embed/${libraryId}/${lecture.video_id}?autoplay=true&loop=false&muted=false&preload=true&responsive=true`;
+  
+  // Update lecture info
+  document.getElementById('lectureTitleMain').textContent = lecture.title;
+  const minutes = Math.floor(lecture.duration / 60);
+  const seconds = lecture.duration % 60;
+  document.getElementById('lectureDescription').textContent = 
+    `Duration: ${minutes}:${seconds.toString().padStart(2, '0')}`;
+  document.getElementById('videoInfo').style.display = 'block';
+
+  // Update buttons
+  const isCompleted = completedLectureIds.has(lecture.id);
+  const markBtn = document.getElementById('markCompleteBtn');
+  const nextBtn = document.getElementById('nextLectureBtn');
+  const badge = document.getElementById('completionBadge');
+  
+  if (isCompleted) {
+    markBtn.style.display = 'none';
+    badge.style.display = 'inline-block';
+  } else {
+    markBtn.style.display = 'inline-block';
+    badge.style.display = 'none';
+  }
+  
+  nextBtn.disabled = index >= currentLectures.length - 1;
+  
+  markBtn.onclick = () => markLectureComplete(lecture.id, index);
+  nextBtn.onclick = () => playLecture(index + 1);
+}
+
+async function markLectureComplete(lectureId, lectureIndex) {
+  const courseId = getCourseId();
+  const accessToken = localStorage.getItem('token');
+
+  if (!accessToken) {
+    alert("Please log in to track your progress");
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/progress/update', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        course_id: parseInt(courseId),
+        lecture_id: lectureId,
+        completed: true,
+        accessToken: accessToken
+      })
+    });
+
+    if (!res.ok) throw new Error('Failed to update progress');
+
+    // Update local state
+    completedLectureIds.add(lectureId);
+
+    // Update sidebar item instantly
+    const item = document.querySelector(`.lecture-item[data-lecture-id="${lectureId}"]`);
+    if (item) {
+      item.classList.add('completed');
+      item.querySelector('.lecture-status').textContent = '✅';
+    }
+
+    // Update buttons visually
+    document.getElementById('markCompleteBtn').style.display = 'none';
+    document.getElementById('completionBadge').style.display = 'inline-block';
+
+    // Calculate new progress locally
+    const totalLectures = currentLectures.length;
+    const completedCount = completedLectureIds.size;
+    const percent = totalLectures > 0 ? Math.round((completedCount / totalLectures) * 100) : 0;
+
+    // Animate progress bar and text
+    const progressFill = document.getElementById('progressFill');
+    const completionText = document.getElementById('completionText');
+    
+    // Force transition to trigger
+    progressFill.style.transition = 'none';
+    progressFill.offsetHeight; // Force reflow
+    progressFill.style.transition = 'width 0.6s ease';
+    progressFill.style.width = `${percent}%`;
+    
+    completionText.textContent = `${completedCount}/${totalLectures} lectures (${percent}%)`;
+
+    console.log(`Progress updated: ${completedCount}/${totalLectures} (${percent}%)`);
+
+    // Enable next lecture button if applicable
+    if (lectureIndex < currentLectures.length - 1) {
+      document.getElementById('nextLectureBtn').disabled = false;
+    }
+
+  } catch (err) {
+    console.error("Error marking complete:", err);
+    alert("Failed to mark lecture as complete. Please try again.");
+  }
+}
+
+// Mobile sidebar functionality
+function toggleMobileSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('active');
+}
+
+function closeMobileSidebar() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  
+  sidebar.classList.remove('open');
+  overlay.classList.remove('active');
+}
+
+// Initialize
+document.addEventListener('DOMContentLoaded', () => {
+  loadCourse();
+  
+  // Set up mobile sidebar toggle
+  document.getElementById('sidebarToggle').addEventListener('click', toggleMobileSidebar);
+  document.getElementById('closeSidebar').addEventListener('click', closeMobileSidebar);
+  document.getElementById('sidebarOverlay').addEventListener('click', closeMobileSidebar);
+});
+</script>
+
+</body>
+</html>

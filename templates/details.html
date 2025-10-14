@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Course Details - PiLearn</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- Pi Network SDK -->
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script>
+        // Create payment on backend
+        Pi.init({ version: "2.0", sandbox: true });
+        
+        const scopes = ['username', 'payments'];
+        function onIncompletePaymentFound(payment) { return; }
+
+        // Authenticate via Pi SDK
+        Pi.authenticate(scopes, onIncompletePaymentFound);
+
+    </script>
+    <style>
+        .course-hero {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 3rem 0;
+            margin-bottom: 2rem;
+        }
+        .course-thumbnail {
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+        }
+        .lecture-list {
+            max-height: 600px;
+            overflow-y: auto;
+        }
+        .lecture-item {
+            border: none;
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            transition: all 0.3s ease;
+        }
+        .lecture-item:hover {
+            background-color: #f8f9fa;
+        }
+        .locked-lecture {
+            opacity: 0.6;
+            background-color: #f8f9fa;
+        }
+        .preview-badge {
+            background-color: #17a2b8;
+            color: white;
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+        }
+        .pi-price {
+            color: #17a2b8;
+            font-weight: 700;
+            font-size: 1.5rem;
+        }
+        .buy-btn {
+            padding: 0.75rem 2rem;
+            font-weight: 600;
+        }
+        .locked-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255,255,255,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 8px;
+        }
+        .loading-spinner {
+            display: none;
+        }
+        .rating-stars {
+            color: #ffc107;
+        }
+        .rating-badge {
+            background: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            color: #856404;
+        }
+        .review-card {
+            border-left: 4px solid #17a2b8;
+            background: #f8f9fa;
+        }
+        .review-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .review-meta {
+            font-size: 0.875rem;
+            color: #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="bi bi-mortarboard-fill me-2"></i>PiLearn
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/login">Login</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/register">Register</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner text-center my-5">
+        <div class="spinner-border text-info" role="status">
+            <span class="visually-hidden">Loading course...</span>
+        </div>
+        <p class="mt-2 text-muted">Loading course details...</p>
+    </div>
+
+    <!-- Course Details -->
+    <div id="courseContainer" class="container" style="display: none; margin-top: 24px;">
+        <!-- Course Hero Section -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="course-hero rounded-3">
+                    <div class="container">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h1 id="courseTitle" class="display-6 fw-bold mb-2"></h1>
+                                <p id="courseInstructor" class="lead mb-3"></p>
+                                <div class="d-flex align-items-center gap-3">
+                                    <span id="coursePrice" class="pi-price"></span>
+                                    <div id="courseRating" class="d-flex align-items-center gap-1"></div>
+                                    <div id="purchaseStatus"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="row">
+            <!-- Left Column: Course Details -->
+            <div class="col-lg-8">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h4 class="card-title fw-bold">About This Course</h4>
+                        <p id="courseDescription" class="card-text"></p>
+                        
+                        
+                    </div>
+                </div>
+
+                <!-- Course Curriculum -->
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <h4 class="card-title fw-bold mb-0">Course Curriculum</h4>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="lectureList" class="lecture-list">
+                            <!-- Lectures will be populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ratings & Reviews Section -->
+                <div class="card">
+                    <div class="card-header bg-white">
+                        <h4 class="card-title fw-bold mb-0">Student Reviews</h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="ratingsSummary" class="mb-4">
+                            <!-- Ratings summary will be populated here -->
+                        </div>
+                        <div id="reviewsList">
+                            <!-- Reviews will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Purchase & Info -->
+            <div class="col-lg-4">
+                <div class="card sticky-top" style="top: 2rem;">
+                    <img id="courseThumbnail" class="card-img-top" alt="Course thumbnail">
+                    <div class="card-body">
+                        <div class="text-center mb-3">
+                            <span id="sidebarPrice" class="pi-price d-block mb-2"></span>
+                            <div id="sidebarRating" class="mb-3"></div>
+                            <div id="purchaseButtonContainer">
+                                <!-- Purchase button will be inserted here -->
+                            </div>
+                        </div>
+                        
+                        <div class="course-features">
+                            <h6 class="fw-bold mb-3">This course includes:</h6>
+                            <ul class="list-unstyled">
+                                <li class="mb-2">
+                                    <i class="bi bi-play-circle text-info me-2"></i>
+                                    <span id="lectureCount">0</span> on-demand lectures
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-infinity text-info me-2"></i>
+                                    Lifetime access
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-phone text-info me-2"></i>
+                                    Access on mobile and desktop
+                                </li>
+                                <li class="mb-2">
+                                    <i class="bi bi-award text-info me-2"></i>
+                                    Certificate of completion
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Alert Container -->
+    <div id="alertContainer" class="container mt-3"></div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+  async function getUserId() {
+    try {
+        const response = await fetch('/api/auth/me', {
+            headers: {
+                'Authorization': 'Bearer ' + localStorage.getItem("token")
+            }
+        });
+        if (!response.ok) {
+            throw new Error('Not logged in');
+        }
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error fetching user ID:', error);
+        return null;
+    }
+}
+
+let tmpuser;
+let currentCourse = null;
+let userHasAccess = false;
+let courseRatings = null;
+
+document.addEventListener('DOMContentLoaded', async function() {
+    const courseId = window.location.pathname.split("/").pop();
+
+    if (!courseId) {
+        showAlert('No course ID provided!', 'danger');
+        return;
+    }
+
+    // Wait for user data before continuing
+    tmpuser = await getUserId();
+
+    // Then load course and check access
+    await loadCourseData(courseId);
+    await checkCourseAccess(courseId);
+    await loadCourseRatings(courseId);
+});
+
+// Load course data from backend
+async function loadCourseData(courseId) {
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const courseContainer = document.getElementById('courseContainer');
+    
+    loadingSpinner.style.display = 'block';
+    courseContainer.style.display = 'none';
+
+    try {
+        const response = await fetch(`/api/courses/${courseId}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch course data');
+        }
+        
+        currentCourse = await response.json();
+        console.log('Course data:', currentCourse);
+        displayCourseData(currentCourse);
+        
+    } catch (error) {
+        console.error('Error loading course:', error);
+        showAlert('Failed to load course data. Please try again.', 'danger');
+    } finally {
+        loadingSpinner.style.display = 'none';
+        courseContainer.style.display = 'block';
+    }
+}
+
+// Load course ratings
+async function loadCourseRatings(courseId) {
+    try {
+        const response = await fetch(`/api/ratings/get?course_id=${courseId}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch ratings');
+        }
+        
+        const data = await response.json();
+        if (data.success) {
+            courseRatings = data;
+            displayRatings(data);
+        }
+    } catch (error) {
+        console.error('Error loading ratings:', error);
+    }
+}
+
+// Display ratings and reviews
+function displayRatings(ratingsData) {
+    const ratingsSummary = document.getElementById('ratingsSummary');
+    const reviewsList = document.getElementById('reviewsList');
+    const sidebarRating = document.getElementById('sidebarRating');
+
+    // Clear previous content
+    ratingsSummary.innerHTML = '';
+    reviewsList.innerHTML = '';
+    sidebarRating.innerHTML = '';
+
+    const averageRating = ratingsData.average_rating || 0;
+    const ratingsCount = ratingsData.ratings ? ratingsData.ratings.length : 0;
+
+    // Display average rating in hero section
+    const courseRating = document.getElementById('courseRating');
+    if (averageRating > 0) {
+        courseRating.innerHTML = `
+            <span class="rating-stars">${renderStars(averageRating)}</span>
+            <span class="text-white">${averageRating.toFixed(1)} (${ratingsCount} reviews)</span>
+        `;
+    } else {
+        courseRating.innerHTML = '<span class="text-white-50">No ratings yet</span>';
+    }
+
+    // Display rating in sidebar
+    if (averageRating > 0) {
+        sidebarRating.innerHTML = `
+            <div class="d-flex align-items-center justify-content-center gap-2">
+                <span class="rating-stars">${renderStars(averageRating)}</span>
+                <span class="fw-bold">${averageRating.toFixed(1)}</span>
+                <span class="text-muted">(${ratingsCount})</span>
+            </div>
+        `;
+    }
+
+    // Display ratings summary
+    if (ratingsCount > 0) {
+        ratingsSummary.innerHTML = `
+            <div class="row align-items-center">
+                <div class="col-md-4 text-center">
+                    <div class="display-4 fw-bold text-primary">${averageRating.toFixed(1)}</div>
+                    <div class="rating-stars mb-2">${renderStars(averageRating)}</div>
+                    <div class="text-muted">${ratingsCount} review${ratingsCount !== 1 ? 's' : ''}</div>
+                </div>
+                <div class="col-md-8">
+                    <div class="rating-bars">
+                        ${generateRatingBars(ratingsData.ratings)}
+                    </div>
+                </div>
+            </div>
+        `;
+
+        // Display individual reviews
+        if (ratingsData.ratings.length > 0) {
+            const reviewsHTML = ratingsData.ratings.map(review => `
+                <div class="review-card p-3 mb-3 rounded">
+                    <div class="review-header">
+                        <div class="rating-stars">${renderStars(review.rating)}</div>
+                        <small class="review-meta">
+                            ${new Date(review.created_at).toLocaleDateString()}
+                        </small>
+                    </div>
+                    ${review.review ? `<p class="mb-0">${review.review}</p>` : '<p class="text-muted mb-0"><i>No review text</i></p>'}
+                </div>
+            `).join('');
+
+            reviewsList.innerHTML = reviewsHTML;
+        }
+    } else {
+        ratingsSummary.innerHTML = `
+            <div class="text-center py-4">
+                <i class="bi bi-star display-4 text-muted mb-3"></i>
+                <h5 class="text-muted">No reviews yet</h5>
+                <p class="text-muted">Be the first to review this course!</p>
+            </div>
+        `;
+    }
+}
+
+// Generate rating distribution bars
+function generateRatingBars(ratings) {
+    const ratingCounts = {5: 0, 4: 0, 3: 0, 2: 0, 1: 0};
+    
+    // Count ratings
+    ratings.forEach(rating => {
+        ratingCounts[rating.rating]++;
+    });
+
+    const totalRatings = ratings.length;
+    
+    return [5, 4, 3, 2, 1].map(stars => {
+        const count = ratingCounts[stars];
+        const percentage = totalRatings > 0 ? (count / totalRatings) * 100 : 0;
+        
+        return `
+            <div class="row align-items-center mb-2">
+                <div class="col-2">
+                    <small class="text-muted">${stars} star${stars !== 1 ? 's' : ''}</small>
+                </div>
+                <div class="col-8">
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-warning" style="width: ${percentage}%"></div>
+                    </div>
+                </div>
+                <div class="col-2">
+                    <small class="text-muted">${count}</small>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Render star rating
+function renderStars(rating) {
+    const fullStars = Math.floor(rating);
+    const halfStar = rating % 1 >= 0.5;
+    const emptyStars = 5 - fullStars - (halfStar ? 1 : 0);
+    
+    let starsHTML = '';
+    
+    // Full stars
+    for (let i = 0; i < fullStars; i++) {
+        starsHTML += '<i class="bi bi-star-fill"></i>';
+    }
+    
+    // Half star
+    if (halfStar) {
+        starsHTML += '<i class="bi bi-star-half"></i>';
+    }
+    
+    // Empty stars
+    for (let i = 0; i < emptyStars; i++) {
+        starsHTML += '<i class="bi bi-star"></i>';
+    }
+    
+    return starsHTML;
+}
+
+// Check if user has access to the course
+async function checkCourseAccess(courseId) {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    
+    try {
+        const response = await fetch(`/api/courses/${courseId}/access`, {
+            headers: {
+                'Authorization': 'Bearer ' + tmpuser.id
+            }
+        });
+        
+        if (response.ok) {
+            const accessData = await response.json();
+            userHasAccess = accessData.has_access;
+            updatePurchaseStatus();
+        }
+    } catch (error) {
+        console.error('Error checking course access:', error);
+    }
+}
+
+// Display course data in the UI
+async function displayCourseData(course) {
+    // Fetch instructor info
+    let instructorName = 'Instructor';
+    try {
+        const res = await fetch(`/api/courses/instructor/${course.instructor_id}`, {
+            credentials: 'include'
+        });
+        if (res.ok) {
+            const instructor = await res.json();
+            instructorName = instructor.username || instructorName;
+        }
+    } catch (err) {
+        console.warn('Failed to fetch instructor:', err);
+    }
+
+    // Set basic course info
+    document.getElementById('courseTitle').textContent = course.title;
+    document.getElementById('courseInstructor').textContent = `Instructor: ${instructorName}`;
+    document.getElementById('courseDescription').textContent = course.description || 'No description available.';
+    document.getElementById('coursePrice').textContent = `${course.price_pi} π`;
+    document.getElementById('sidebarPrice').textContent = `${course.price_pi} π`;
+
+    // Set thumbnail
+    const thumbnail = document.getElementById('courseThumbnail');
+    thumbnail.alt = course.title;
+    thumbnail.src = course.thumbnail;
+
+    // Display learning objectives (you might want to add this field to your Course model)
+    
+    
+
+    // Display sections and lectures
+    displaySectionsAndLectures(course.sections || []);
+
+    // Update lecture count
+    const totalLectures = calculateTotalLectures(course.sections || []);
+    document.getElementById('lectureCount').textContent = totalLectures;
+}
+
+// Calculate total number of lectures across all sections
+function calculateTotalLectures(sections) {
+    return sections.reduce((total, section) => total + (section.lectures ? section.lectures.length : 0), 0);
+}
+
+// Display sections with their lectures
+function displaySectionsAndLectures(sections) {
+    const lectureList = document.getElementById('lectureList');
+    lectureList.innerHTML = '';
+
+    if (sections.length === 0) {
+        lectureList.innerHTML = `
+            <div class="text-center p-4 text-muted">
+                <i class="bi bi-collection display-4"></i>
+                <p class="mt-2">No curriculum available yet.</p>
+            </div>
+        `;
+        return;
+    }
+
+    sections.forEach((section, sectionIndex) => {
+        // Create section header
+        const sectionHeader = document.createElement('div');
+        sectionHeader.className = 'bg-light p-3 border-bottom';
+        sectionHeader.innerHTML = `
+            <h6 class="mb-0 fw-bold">${sectionIndex + 1}. ${section.title}</h6>
+            <small class="text-muted">${section.lectures ? section.lectures.length : 0} lectures</small>
+        `;
+        lectureList.appendChild(sectionHeader);
+
+        // Add lectures for this section
+        if (section.lectures && section.lectures.length > 0) {
+            section.lectures.forEach((lecture, lectureIndex) => {
+                const isFirstLecture = sectionIndex === 0 && lectureIndex === 0;
+                const isUnlocked = userHasAccess || isFirstLecture;
+                
+                const lectureItem = document.createElement('div');
+                lectureItem.className = `lecture-item p-3 position-relative ${!isUnlocked ? 'locked-lecture' : ''}`;
+                
+                let actionButton = '';
+                if (isUnlocked) {
+                    actionButton = `<button class="btn btn-sm btn-outline-info" onclick="watchLecture(${lecture.id})">Watch</button>`;
+                } else {
+                    actionButton = '<span class="badge bg-secondary">Locked 🔒</span>';
+                }
+
+                lectureItem.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="d-flex align-items-center">
+                            <i class="bi bi-play-circle me-3 ${isUnlocked ? 'text-info' : 'text-muted'}"></i>
+                            <div>
+                                <h6 class="mb-1">${lecture.title}</h6>
+                                <small class="text-muted">${formatDuration(lecture.duration) || 'No duration specified'}</small>
+                                ${isFirstLecture && !userHasAccess ? '<span class="preview-badge ms-2">Preview</span>' : ''}
+                            </div>
+                        </div>
+                        ${actionButton}
+                    </div>
+                    ${!isUnlocked ? '<div class="locked-overlay"><i class="bi bi-lock-fill text-muted"></i></div>' : ''}
+                `;
+                
+                lectureList.appendChild(lectureItem);
+            });
+        } else {
+            const emptySection = document.createElement('div');
+            emptySection.className = 'p-3 text-muted text-center';
+            emptySection.innerHTML = '<small>No lectures in this section yet.</small>';
+            lectureList.appendChild(emptySection);
+        }
+    });
+}
+
+// Format duration from seconds to readable format
+function formatDuration(seconds) {
+    if (!seconds) return '';
+    
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    
+    if (hours > 0) {
+        return `${hours}h ${minutes}m`;
+    } else {
+        return `${minutes}m`;
+    }
+}
+
+// Watch lecture function
+function watchLecture(lectureId) {
+    if (userHasAccess) {
+        window.location.href = `/video/${lectureId}`;
+    } else {
+        showAlert('Please purchase the course to access all lectures.', 'warning');
+    }
+}
+
+// Update purchase status and button
+function updatePurchaseStatus() {
+    const purchaseStatus = document.getElementById('purchaseStatus');
+    const purchaseButtonContainer = document.getElementById('purchaseButtonContainer');
+    
+    if (userHasAccess) {
+        purchaseStatus.innerHTML = '<span class="badge bg-success">Purchased ✓</span>';
+        purchaseButtonContainer.innerHTML = `
+            <a class="btn btn-success w-100 buy-btn" href="/video/${currentCourse.id}" style="text-decoration:none;">
+                <i class="bi bi-play-circle me-2"></i>Start Watching
+            </a>
+        `;
+    } else {
+        purchaseStatus.innerHTML = '';
+        purchaseButtonContainer.innerHTML = `
+            <button class="btn btn-info w-100 buy-btn" onclick="initiatePiPayment()">
+                <i class="bi bi-currency-bitcoin me-2"></i>Buy Course for ${currentCourse.price_pi} π
+            </button>
+        `;
+    }
+    
+    // Refresh lecture display with new access status
+    if (currentCourse && currentCourse.sections) {
+        displaySectionsAndLectures(currentCourse.sections);
+    }
+}
+
+// Initiate Pi Network payment
+async function initiatePiPayment() {
+    const token = localStorage.getItem('token');
+    if (!token) {
+        showAlert('Please log in to purchase this course.', 'warning');
+        setTimeout(() => {
+            window.location.href = '/login';
+        }, 2000);
+        return;
+    }
+
+    try {
+        console.log("Payment proceeding...");
+        console.log("User authenticated:", tmpuser);
+        
+        const id = tmpuser.id;
+        const paymentData = {
+            amount: currentCourse.price_pi,
+            memo: `Purchase: ${currentCourse.title}`,
+            metadata: { 
+                user_id: id, 
+                currentCourse: currentCourse
+            }
+        };
+
+        // Initiate Pi payment
+        Pi.createPayment(paymentData, {
+            onReadyForServerApproval: (paymentId) => {
+                console.log('Payment ready for approval:', paymentId);
+                // Approve payment on backend
+                fetch('/api/payments/approve', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        paymentId,
+                        courseId: currentCourse.id,
+                        userId: id
+                    })
+                }).then(response => {
+                    if (!response.ok) {
+                        throw new Error('Payment approval failed');
+                    }
+                    return response.json();
+                }).then(data => {
+                    console.log('Payment approved:', data);
+                }).catch(error => {
+                    console.error('Approval error:', error);
+                });
+            },
+            onReadyForServerCompletion: (paymentId, txid) => {
+                console.log('Payment ready for completion:', paymentId, txid);
+                // Complete payment on backend
+                fetch('/api/payments/complete', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer ' + token,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        paymentId, 
+                        txid,
+                        courseId: currentCourse.id,
+                        price: currentCourse.price_pi
+                    })
+                }).then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Payment completion failed');
+                    }
+                }).then(data => {
+                    showAlert('Payment completed successfully! Course unlocked.', 'success');
+                    userHasAccess = true;
+                    updatePurchaseStatus();
+                }).catch(error => {
+                    console.error('Completion error:', error);
+                    showAlert('Payment completion failed. Please contact support.', 'danger');
+                });
+            },
+            onCancel: () => {
+                showAlert('Payment was canceled.', 'warning');
+            },
+            onError: (error) => {
+                console.error('Payment error:', error);
+                showAlert('Payment failed: ' + error, 'danger');
+            }
+        });
+
+    } catch (error) {
+        console.error('Payment initiation error:', error);
+        showAlert('Failed to initiate payment. Please try again.', 'danger');
+    }
+}
+
+// Show alert message
+function showAlert(message, type) {
+    const alertContainer = document.getElementById('alertContainer');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    alertContainer.appendChild(alert);
+    
+    // Auto-dismiss success alerts after 5 seconds
+    if (type === 'success') {
+        setTimeout(() => {
+            alert.remove();
+        }, 5000);
+    }
+}
+    </script>
+</body>
+</html>
