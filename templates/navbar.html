@@ -21,6 +21,11 @@
                 <li class="nav-item" id="loginItem">
                     <a class="nav-link" href="/login">Login</a>
                 </li>
+                <li class="nav-item" id="logoutItem" style="display: none;">
+                    <a class="nav-link" href="#" id="logoutBtn">
+                        <i class="bi bi-box-arrow-right"></i> Logout
+                    </a>
+                </li>
             </ul>
         </div>
     </div>
@@ -31,6 +36,8 @@ document.addEventListener('DOMContentLoaded', async function() {
     const instructorDashboardItem = document.getElementById('instructorDashboardItem');
     const studentDashboardItem = document.getElementById('studentDashboardItem');
     const loginItem = document.getElementById('loginItem');
+    const logoutItem = document.getElementById('logoutItem');
+    const logoutBtn = document.getElementById('logoutBtn');
     const become = document.getElementById('becomein');
     
     
@@ -38,9 +45,9 @@ document.addEventListener('DOMContentLoaded', async function() {
     const token = localStorage.getItem('token');
     
     if (token) {
-        // User is authenticated, hide login and show dashboards
+        // User is authenticated, hide login and show dashboards + logout
         loginItem.style.display = 'none';
-        
+        logoutItem.style.display = 'block';
         studentDashboardItem.style.display = 'block';
         
 
@@ -68,10 +75,32 @@ document.addEventListener('DOMContentLoaded', async function() {
             console.error('Error checking instructor status:', error);
         }
     } else {
-        // User is not authenticated, show login and hide dashboards
+        // User is not authenticated, show login and hide dashboards + logout
         loginItem.style.display = 'block';
         studentDashboardItem.style.display = 'none';
         instructorDashboardItem.style.display = 'none';
+        logoutItem.style.display = 'none';
     }
+
+    // Logout functionality
+    logoutBtn.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Remove token from localStorage
+        localStorage.removeItem('token');
+        
+        // Hide logout button and show login
+        logoutItem.style.display = 'none';
+        loginItem.style.display = 'block';
+        
+        // Hide dashboards
+        studentDashboardItem.style.display = 'none';
+        instructorDashboardItem.style.display = 'none';
+        become.style.display = 'block';
+ 
+        
+        // Optional: Redirect to home page
+        window.location.href = '/';
+    });
 });
 </script>
