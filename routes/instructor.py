@@ -375,8 +375,8 @@ def edit_course(course_id):
     # ✅ Optional: Upload new thumbnail if provided
     if thumbnail:
         try:
-            STORAGE_ZONE = 'thumbnailspilearn'
-            ACCESS_KEY = '0ba2a024-c7dc-423d-a4f9cb83c4cf-f9ff-41cf'
+            STORAGE_ZONE = os.getenv("STORAGE_ZONE")
+            ACCESS_KEY =  os.getenv("ACCESS_KEY")
             BUNNY_URL = f'https://storage.bunnycdn.com/{STORAGE_ZONE}/{thumbnail.filename}'
 
             headers = {"AccessKey": ACCESS_KEY, "Content-Type": "application/octet-stream"}
@@ -684,4 +684,5 @@ def get_instructor_students():
         "total_students": total_students,
         "courses": course_data
     })
+
 
