@@ -79,6 +79,10 @@ def create_app():
     @app.route('/become')
     def become():
         return render_template('become.html')
+
+    @app.route('/tou')
+    def tou():
+        return render_template('tou.html')
     
     @app.route('/validation-key.txt')
     def validation():
