@@ -39,10 +39,12 @@ def become_instructor():
         user_data = verify_pi_token(access_token)
         if not user_data:
             return jsonify({"success": False, "error": "Invalid Pi token"}), 401
-
+        print(type(user_data))
         # ✅ Find the user in database
         user = User.query.filter_by(pi_uid=user_data["uid"]).first()
+        
         if not user:
+            print("not user")
             return jsonify({"success": False, "error": "User not found"}), 404
 
         # ✅ Check if user already an instructor
@@ -362,8 +364,11 @@ def edit_course(course_id):
             course.price_pi = float(price_pi)
         except ValueError:
             return jsonify({"success": False, "error": "Invalid price"}), 400
-    if is_published is not None:
-        course.is_published = str(is_published).lower() in ["true", "1", "yes"]
+    print(is_published)
+    if is_published is None:
+        course.is_published = 0
+    elif is_published:
+        course.is_published = 1
 
     # ✅ Optional: Upload new thumbnail if provided
     if thumbnail:
@@ -634,4 +639,46 @@ def get_instructor_earnings(user_id):
         "instructor_id": instructor.id,
         "total_earnings": instructor.total_earnings,
         "courses": courses_data
+    })
+
+@bp.route("/students", methods=["POST"])
+def get_instructor_students():
+    from models import User,Purchase, Instructor, Course
+    data = request.get_json()
+    access_token = data.get("accessToken")
+
+    # --- Verify Pi token ---
+    user_data = verify_pi_token(access_token)
+    if not user_data:
+        return jsonify({"success": False, "error": "Invalid Pi token"}), 401
+
+    user = User.query.filter_by(pi_uid=user_data["uid"]).first()
+    if not user:
+        return jsonify({"success": False, "error": "User not found"}), 404
+
+    instructor = Instructor.query.filter_by(user_id=user.id).first()
+    if not instructor:
+        return jsonify({"success": False, "error": "Not an instructor"}), 403
+
+    # --- Get instructor courses ---
+    courses = Course.query.filter_by(instructor_id=user.id).all()
+
+    total_students = 0
+    course_data = []
+
+    for course in courses:
+        students_count = (
+            Purchase.query.filter_by(course_id=course.id, status="completed").count()
+        )
+        total_students += students_count
+        course_data.append({
+            "course_id": course.id,
+            "title": course.title,
+            "students": students_count
+        })
+
+    return jsonify({
+        "success": True,
+        "total_students": total_students,
+        "courses": course_data
     })
