@@ -16,7 +16,7 @@ def create_app():
     app.config["SECRET_KEY"] = "super-secret-key"
     
     app.config["SESSION_TYPE"] = "filesystem"
-    app.config["SESSION_COOKIE_SECURE"] = False  # True only with HTTPS
+    app.config["SESSION_COOKIE_SECURE"] = True  # True only with HTTPS
 
     app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
     app.config["SESSION_COOKIE_NAME"] = "my_session"
@@ -24,6 +24,9 @@ def create_app():
     app.config["SESSION_PERMANENT"] = False
     app.config["SESSION_USE_SIGNER"] = True
     app.config["SESSION_FILE_DIR"] = "./flask_session"
+
+    app.config["SESSION_KEY_PREFIX"] = "session:"
+    app.config["SESSION_SERIALIZATION_FORMAT"] = "json"
 
     Session(app)
     
