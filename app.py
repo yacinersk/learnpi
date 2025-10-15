@@ -27,12 +27,7 @@ def create_app():
 
     app.config["SESSION_KEY_PREFIX"] = "session:"
     app.config["SESSION_SERIALIZATION_FORMAT"] = "json"
-
-    Session(app)
     
-    # --- CORS (very important for cookies) ---
-    # CORS(app, supports_credentials=True, origins=["http://localhost:5000", "http://127.0.0.1:5000"])
-
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data.db'
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     db.init_app(app)
