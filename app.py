@@ -83,7 +83,7 @@ def create_app():
         return render_template('become.html')
     
     @app.route('/validation-key.txt')
-    def become():
+    def validation():
         return "2b9e833b864976b3b46444090ff3247b988613ac6203c801e5fd41208541c53d96c3d88888044317936248c1b5a3bf1e2d2cc354aacc9adc9cd23a7889786f8a"
     
     return app
