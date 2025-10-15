@@ -82,7 +82,7 @@ def create_app():
     
     @app.route('/validation-key.txt')
     def validation():
-        return "2b9e833b864976b3b46444090ff3247b988613ac6203c801e5fd41208541c53d96c3d88888044317936248c1b5a3bf1e2d2cc354aacc9adc9cd23a7889786f8a"
+        return "550f621f9c2dee7dd2a7f98a3657cbc4b8d49879918e98daa3e89d05e2598a475fdbeaac5227d61c5afb2ff5ac0ce0e5c7855db65f4d5efaf6e3d15e3c5071c5"
     
     return app
 
