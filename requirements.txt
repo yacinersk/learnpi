@@ -1,33 +1,10 @@
-# Core framework
 Flask==3.0.3
+Flask-Cors==4.0.1
+Flask-Session==0.5.0
+Flask-SQLAlchemy==3.1.1
+requests==2.31.0
+gunicorn==21.2.0
 Werkzeug==3.0.3
 itsdangerous==2.2.0
 Jinja2==3.1.4
-
-# ORM + DB
-SQLAlchemy==2.0.36
-Flask-SQLAlchemy==3.1.1
-greenlet==3.0.3
-
-# Auth / Utils
-requests==2.32.3
-urllib3==2.2.2
-idna==3.7
-certifi==2024.8.30
-charset-normalizer==3.4.0
-
-# CORS + JSON + Forms
-Flask-Cors==5.0.0
-email-validator==2.2.0
-WTForms==3.1.2
-
-# Background / validation (no pydantic-core)
-marshmallow==3.22.0
-
-# Deployment tools
-gunicorn==23.0.0
-
-# Force latest pip tools for 3.13 compatibility
-pip==25.1.1
-setuptools==74.1.2
-wheel==0.45.0
+python-dotenv==1.0.1
