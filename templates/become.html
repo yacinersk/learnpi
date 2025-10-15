@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Become an Instructor - PiLearn</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <style>
+        .instructor-card {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: none;
+            border-radius: 12px;
+        }
+        .instructor-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+        }
+        .navbar-brand {
+            font-weight: 700;
+            color: #17a2b8 !important;
+        }
+        .benefit-icon {
+            font-size: 2rem;
+            color: #17a2b8;
+            margin-bottom: 1rem;
+        }
+        .pi-price {
+            color: #17a2b8;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+        .enrollment-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-left: 4px solid #17a2b8;
+        }
+        .success-message {
+            display: none;
+            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+            border-left: 4px solid #28a745;
+        }
+        .loading-spinner {
+            display: none;
+        }
+        footer {
+            margin-top: 4rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation Bar -->
+    {% include 'navbar.html' %}
+    <!-- Main Content -->
+    <div class="container my-5">
+        <!-- Header Section -->
+        <div class="row mb-4">
+            <div class="col-12 text-center">
+                <h1 class="display-5 fw-bold mb-3">Become an Instructor</h1>
+                <p class="lead text-muted">Teach what you love and earn Pi from your courses.</p>
+            </div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div id="loadingSpinner" class="loading-spinner text-center my-5">
+            <div class="spinner-border text-info" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2 text-muted">Processing your request...</p>
+        </div>
+
+        <!-- Success Message -->
+        <div id="successMessage" class="success-message p-4 rounded mb-4">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-check-circle-fill text-success me-3" style="font-size: 2rem;"></i>
+                <div>
+                    <h4 class="text-success mb-1">Congratulations! You're now an instructor 🎉</h4>
+                    <p class="mb-0">You can now access your instructor dashboard and start creating courses.</p>
+                </div>
+            </div>
+            <div class="mt-3">
+                <a href="/instructor-board" class="btn btn-success">Go to Dashboard</a>
+            </div>
+        </div>
+
+        <!-- Main Content (shown when not loading) -->
+        <div id="mainContent">
+            <div class="row g-4">
+                <!-- Instructor Benefits Card -->
+                <div class="col-lg-8">
+                    <div class="card instructor-card shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <h3 class="card-title mb-4">Instructor Benefits</h3>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-4">
+                                    <div class="text-center">
+                                        <i class="bi bi-currency-dollar benefit-icon"></i>
+                                        <h5>Earn 75% of Course Sales</h5>
+                                        <p class="text-muted">Keep the majority of revenue from each course you sell.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <div class="text-center">
+                                        <i class="bi bi-graph-up benefit-icon"></i>
+                                        <h5>Earnings Dashboard</h5>
+                                        <p class="text-muted">Track your income and student engagement with detailed analytics.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <div class="text-center">
+                                        <i class="bi bi-cloud-upload benefit-icon"></i>
+                                        <h5>Direct Video Upload</h5>
+                                        <p class="text-muted">Upload your course videos directly to Bunny.net for fast streaming.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 mb-4">
+                                    <div class="text-center">
+                                        <i class="bi bi-globe benefit-icon"></i>
+                                        <h5>Global Reach</h5>
+                                        <p class="text-muted">Reach learners worldwide through the Pi Network ecosystem.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Enrollment Fee Card -->
+                <div class="col-lg-4">
+                    <div class="card instructor-card shadow-sm h-100">
+                        <div class="card-body p-4">
+                            <h3 class="card-title mb-4">Enrollment Fee</h3>
+                            
+                            <div class="enrollment-card p-3 rounded mb-4">
+                                <div class="text-center">
+                                    <h2 class="pi-price">1.5 π</h2>
+                                    <p class="text-muted mb-0">One-time fee to verify instructor account.</p>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid">
+                                <button id="becomeInstructorBtn" class="btn btn-info btn-lg">
+                                    Become an Instructor
+                                </button>
+                            </div>
+                            
+                            <div class="mt-3 text-center">
+                                <small class="text-muted">
+                                    By clicking this button, you agree to our 
+                                    <a href="#">Instructor Terms</a> and <a href="#">Privacy Policy</a>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Already Instructor Message -->
+            <div id="alreadyInstructorMessage" class="alert alert-info mt-4" style="display: none;">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-info-circle-fill me-3" style="font-size: 1.5rem;"></i>
+                    <div>
+                        <h5 class="mb-1">You're already an instructor!</h5>
+                        <p class="mb-0">You can access your instructor dashboard to create and manage courses.</p>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <a href="/instructor-board" class="btn btn-outline-info">Go to Dashboard</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light py-4 mt-5">
+        <div class="container text-center">
+            <p class="text-muted mb-0">© 2025 LearnPi - Built with Flask & Pi Network</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Pi SDK -->
+    <script src="https://sdk.minepi.com/pi-sdk.js"></script>
+    <script>
+        Pi.init({ version: "2.0" })
+        Pi.authenticate(['username','payments'], () => {});
+    </script>
+
+    <script>
+document.addEventListener('DOMContentLoaded', function() {
+    const becomeInstructorBtn = document.getElementById('becomeInstructorBtn');
+    const loadingSpinner = document.getElementById('loadingSpinner');
+    const successMessage = document.getElementById('successMessage');
+    const alreadyInstructorMessage = document.getElementById('alreadyInstructorMessage');
+    const mainContent = document.getElementById('mainContent');
+    
+    becomeInstructorBtn.addEventListener('click', handleBecomeInstructor);
+    
+    async function handleBecomeInstructor() {
+        // Show loading spinner
+        loadingSpinner.style.display = 'block';
+        mainContent.style.display = 'none';
+        
+        try {
+            // Get access token from localStorage (assuming it's stored there after login)
+            const token = localStorage.getItem("token");
+            
+            if (!token) {
+                alert("Please log in first");
+                resetUI();
+                return;
+            }
+            
+            // Check if user is already an instructor
+            const checkResponse = await fetch("/api/instructor/check", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ accessToken: token }),
+            });
+            
+            const checkData = await checkResponse.json();
+            
+            if (checkData.alreadyInstructor) {
+                // User is already an instructor
+                loadingSpinner.style.display = 'none';
+                mainContent.style.display = 'block';
+                alreadyInstructorMessage.style.display = 'block';
+                return;
+            }
+            
+            // Create Pi payment
+            Pi.createPayment({
+                amount: 1.5,
+                memo: "Instructor enrollment fee",
+                metadata: { 
+                    type: "instructor_enrollment", 
+                    user_id: checkData.user_id || "unknown" 
+                }
+            }, {
+                onReadyForServerApproval: (paymentId) => {
+                    console.log('Payment ready for approval:', paymentId);
+                    
+                    // Approve payment on backend
+                    fetch('/api/payments/approve/instructor', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            paymentId: paymentId
+                        })
+                    }).then(response => {
+                        if (!response.ok) {
+                            throw new Error('Payment approval failed');
+                        }
+                        return response.json();
+                    }).then(data => {
+                        console.log('Payment approved:', data);
+                    }).catch(error => {
+                        console.error('Approval error:', error);
+                        alert('Payment approval failed. Please try again.');
+                    });
+                },
+                onReadyForServerCompletion: (paymentId, txid) => {
+                    console.log('Payment ready for completion:', paymentId, txid);
+                    
+                    // Complete payment on backend
+                    fetch('/api/payments/complete/instructor', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ 
+                            paymentId: paymentId, 
+                            txid: txid
+                        })
+                    }).then(response => {
+                        if (response.ok) {
+                            return response.json();
+                        } else {
+                            throw new Error('Payment completion failed');
+                        }
+                    }).then(data => {
+                        console.log('Payment completed successfully!');
+                        // Show success message
+                        loadingSpinner.style.display = 'none';
+                        successMessage.style.display = 'block';
+                    }).catch(error => {
+                        console.error('Completion error:', error);
+                        alert('Payment completion failed. Please contact support.');
+                        resetUI();
+                    });
+                },
+                onCancel: () => {
+                    console.log('Payment was canceled by user');
+                    alert('Payment was canceled.');
+                    resetUI();
+                },
+                onError: (error, payment) => {
+                    console.error('Payment error:', error);
+                    alert('Payment failed: ' + error);
+                    resetUI();
+                }
+            });
+            
+        } catch (error) {
+            console.error("Error in become instructor process:", error);
+            alert("An error occurred. Please try again.");
+            resetUI();
+        }
+    }
+    
+    function resetUI() {
+        loadingSpinner.style.display = 'none';
+        mainContent.style.display = 'block';
+    }
+});
+    </script>
+</body>
+</html>
