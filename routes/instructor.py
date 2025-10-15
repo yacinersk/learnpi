@@ -41,7 +41,7 @@ def become_instructor():
             return jsonify({"success": False, "error": "Invalid Pi token"}), 401
         print(type(user_data))
         # ✅ Find the user in database
-        user = User.query.filter_by(pi_uid=user_data["uid"]).first()
+        user = User.query.filter_by(username=user_data["username"]).first()
         
         if not user:
             print("not user")
