@@ -120,6 +120,7 @@ def add_course():
         library_id = res.json().get("Id")
         lacle = res.json().get("ApiKey")
     except Exception as e:
+        print("Error creating Bunny library:", e)
         return jsonify({"success": False, "error": f"Library creation failed: {str(e)}"}), 500
 
     # --- Upload course thumbnail to Bunny storage ---
@@ -682,3 +683,4 @@ def get_instructor_students():
         "total_students": total_students,
         "courses": course_data
     })
+
