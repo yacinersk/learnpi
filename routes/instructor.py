@@ -136,9 +136,10 @@ def add_course():
             headers=headers,
             data=thumbnail.read()
         )
+        link = os.getenv("CDN_BASE_URL")
         if response.status_code not in (200, 201):
             return jsonify({"success": False, "error": "Failed to upload thumbnail"}), 500
-        thumbnail_url = f"https://learnpi.b-cdn.net/{thumbnail.filename}"
+        thumbnail_url = f"https://{link}/{thumbnail.filename}"
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
 
@@ -383,8 +384,8 @@ def edit_course(course_id):
 
             if response.status_code not in (200, 201):
                 return jsonify({"success": False, "error": "Failed to upload new thumbnail"}), 500
-
-            thumbnail_url = f"https://learnpi.b-cdn.net/{thumbnail.filename}"
+            link = os.getenv("CDN_BASE_URL")
+            thumbnail_url = f"https://{link}/{thumbnail.filename}"
             course.thumbnail_url = thumbnail_url
         except Exception as e:
             return jsonify({"success": False, "error": f"Thumbnail upload failed: {str(e)}"}), 500
@@ -683,4 +684,3 @@ def get_instructor_students():
         "total_students": total_students,
         "courses": course_data
     })
-
